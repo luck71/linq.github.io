@@ -1,5 +1,5 @@
 +++
-title = "你好世界"
+title = "成为更好的自己"
 date = 2024-01-13
 [taxonomies]
   tags = ["想法"]

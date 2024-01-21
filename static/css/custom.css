@@ -1,0 +1,9 @@
+body {
+  font-family: "Input Sans Narrow", "JetBrains Mono", monospace;
+  max-width: 80rem;
+}
+
+pre code {
+  font-size: 1.4rem;
+  font-family: "JetBrains Mono";
+}

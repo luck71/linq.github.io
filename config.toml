@@ -1,13 +1,22 @@
 # The URL the site will be built for
-base_url = "https://fancylinq.netlify.app"
+base_url = "https://linq.github.io"
 
+# The default language; used in feeds.
+default_language = "zh"
+
+# The site theme to use.
 theme = "anemone"
 
 # Whether to automatically compile all Sass files in the sass directory
 compile_sass = false
+
+# When set to "true", the generated HTML files are minified.
 minify_html = true
+
+# When set to "true", a feed is automatically generated.
 generate_feed = true
 
+# The taxonomies to be rendered for the site and their configuration of the default languages
 taxonomies = [
     {name = "tags", feed = true},
 ]
@@ -31,17 +40,21 @@ anchors = "on"
 
 [extra]
 # Put all your custom variables here
-author = "Fancylinq"
-display_author = true
+author = "云归"
+display_author = false
 
 favicon = "favicon.ico"
-image = ""
+image = "https://avatars.githubusercontent.com/u/1221456?v=4"
 
 default_theme = "light"
 list_pages = false
 
 header_nav = [
-  { url = "/", name_en = "/home/" },
-  { url = "/book", name_en = "/book/" },
-  { url = "/blog", name_en = "/blog/" }
+  { url = "/", name_zh = "/首页/" },
+  { url = "/book", name_zh = "/图书/" },
+  { url = "/blog", name_zh = "/博客/" }
+]
+
+stylesheets = [
+    "css/custom.css"
 ]
