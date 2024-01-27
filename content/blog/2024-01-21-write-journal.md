@@ -1,9 +1,10 @@
-+++
-title = "写好日记"
-date = 2024-01-21
-[taxonomies]
-  tags = ["想法"]
-+++
+---
+title: "写好日记"
+date: 2024-01-21
+taxonomies:
+  tags:
+    - "想法"
+---
 
 ### 我的日记之旅
 

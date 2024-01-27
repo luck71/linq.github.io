@@ -7,6 +7,7 @@
 
 ## 最新博客
 
+- ⛩  [径山祈福](blog/jingshansi)
 - 📓 [写好日记](blog/write-journal)
 - 🥣 [你好世界](blog/hello-world)
 
