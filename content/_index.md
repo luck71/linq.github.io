@@ -14,3 +14,4 @@
 ## 所有 Tag
 
 - [想法](./tags/xiang-fa)
+- [日常](./tags/ri-chang)
