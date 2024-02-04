@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="zh">
+    <title></title>
+    <link href="https://linq.github.io/atom.xml" rel="self" type="application/atom+xml"/>
+    <link href="https://linq.github.io"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2024-02-04T00:00:00+00:00</updated>
+    <id>https://linq.github.io/atom.xml</id>
+    <entry xml:lang="zh">
+        <title>Obsidian制作Anki卡片</title>
+        <published>2024-02-04T00:00:00+00:00</published>
+        <updated>2024-02-04T00:00:00+00:00</updated>
+        <author>
+          <name>fancylinq</name>
+        </author>
+        <link rel="alternate" href="https://linq.github.io/posts/markdown-to-anki/" type="text/html"/>
+        <id>https://linq.github.io/posts/markdown-to-anki/</id>
+        
+        <content type="html">&lt;p&gt;近期一直在用Anki几点东西，但是Anki制卡的过程太繁琐，之前一直在用Obsidian仓库的 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;ObsidianToAnki&#x2F;Obsidian_to_Anki&quot;&gt;Obsidian_to_Anki&lt;&#x2F;a&gt;制卡，整体上还是不错的，但是也有几个让人不太满意的地方。&lt;&#x2F;p&gt;
+&lt;p&gt;一是 Obsidian_to_Anki 每次同步是整个Vault全量扫描同步，这个如果笔记多就会很慢。为了解决这个问题，我专门开了一个 Anki的Vault出来算是勉强绕过去。但实际情况是即使单独的Vault，如果卡片笔记足够多每次同步还是很慢。&lt;&#x2F;p&gt;
+&lt;p&gt;第二个问题就是有些卡片同步不了，这个是真的让我想自己折腾的直接原因。也不知道啥原因同样的制卡笔记，有时候同步不了，但是下一次可能又行了，还有一些是怎么折腾都同步不了。这个是真的搞的我很不爽，为了搞定这个还专门把 Obsidian_to_Anki 的源码翻了下也没看到多少端倪。Obsidian_to_Anki 为了通用大量用了正则做匹配替换，这里排查起来就很头疼，我对JavaScript又不是很熟，也想通过改正则来解决，最后也没搞定。&lt;&#x2F;p&gt;
+&lt;p&gt;前两天搞的烦了就想为啥不自己弄，我又不需要做一个通用工具，只要按照自己的需求简单实现就好了。我的制卡笔记也非常的简单，简单的文本查找应该就能搞定。&lt;&#x2F;p&gt;
+&lt;p&gt;决定之后就是实现了，为了简单肯定用python了，但是我python也不是太熟😹。不过不是还有GPT吗，通过一个prompt把核心代码就生成好了。&lt;&#x2F;p&gt;
+&lt;p&gt;代码生成Prompt：&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;markdown&quot; class=&quot;language-markdown &quot;&gt;&lt;code class=&quot;language-markdown&quot; data-lang=&quot;markdown&quot;&gt;I want you to act as a computer expert，your task is to write python code to extract flash card from markdown and send it to anki. 
+## steps:
+1. extract front and back value from markdown file path
+2. if content matches `![xxx]`, you should extract xxx value
+2. convert front and back value to html, replace `![xxx]` to `&amp;lt;img src=&amp;#x27;xxx&amp;#x27; &amp;#x2F;&amp;gt;`
+3. connect to anki with ankiconnect
+3. create Basic card with front and back value
+
+## markdown content example
+```观放白鹰二首 
+唐⋅ 李白 #flashcard 
+
+【其一】 
+八月边风高，胡鹰白锦毛。 
+孤飞一片雪，百里见秋毫。 
+【其二】 
+寒冬十二月，苍鹰八九毛。 
+寄言燕雀莫相啅，自有云霄万里高。
+
+---
+
+十一月四日风雨大作（其一）
+宋⋅ 陆游 #flashcard 
+
+风卷江湖雨暗村，四山声作海涛翻。 
+溪柴火软蛮毡暖，我与狸奴不出门。
+
+---```
+
+## attention
+1. markdown contains multiple cards seperate by `---`
+2. content before `#flashcard` is front value, after is back value
+3. back value is markdown text, you should convert it to html
+
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;生成的代码整体质量还不错，简单修复一些问题后已经达到能用的状态了。不过生成的python代码太过程试有点不是很满意，又让GPT重构成更简洁和面向对象的风格，同时增加参数解析。最终生成的代码效果还不错，感觉让我自己来写这个代码可能还没它写的好😛。&lt;&#x2F;p&gt;
+&lt;p&gt;脚本的执行效果：&lt;&#x2F;p&gt;
+&lt;pre data-lang=&quot;bash&quot; class=&quot;language-bash &quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;usage: anki2.py [-h] [--deck_name DECK_NAME] [--model_name MODEL_NAME] [--debug] vault_path note_path
+
+Sync Obsidian flashcards with Anki
+
+positional arguments:
+  vault_path            The file path to the Obsidian vault
+  note_path             The path to the note folder within the vault
+
+options:
+  -h, --help            show this help message and exit
+  --deck_name DECK_NAME
+                        The name of the Anki deck (optional)
+  --model_name MODEL_NAME
+                        The name of the Anki model (optional)
+  --debug               Enable debug logging
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;markdown-to-anki&#x2F;anki_card.webp&quot; alt=&quot;anki_card&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;Code：&lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;linq&#x2F;markdown-to-anki&#x2F;tree&#x2F;main&quot;&gt;markdown-to-anki&lt;&#x2F;a&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="zh">
+        <title>径山祈福</title>
+        <published>2024-01-27T00:00:00+00:00</published>
+        <updated>2024-01-27T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://linq.github.io/posts/jingshansi/" type="text/html"/>
+        <id>https://linq.github.io/posts/jingshansi/</id>
+        
+        <content type="html">&lt;p&gt;听同事说径山寺求事业比较灵，本来2周前就计划要去的，因为各种延期两次今天终于成行。径山寺之前也来过两次了，上次来应该是前年过年的时候，那时候山上积雪挺大，景色还是挺好的。今天的天气就不算太好，温度低加上一直没有太阳，体感上就比较冷。&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi01.webp&quot; alt=&quot;径山寺入口&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi02.webp&quot; alt=&quot;大殿&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;因为到山上已经11点半，我们直接去吃斋面，之前两次都没吃到，这次排了5分钟左右终于是吃到了。点了两份素面和一份小菜，素面味道还是挺不错的（就是太不顶饿了，下午2点就饿了😑）。&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi03.webp&quot; alt=&quot;素面&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;吃完面在寺庙里面各种拜，中途看到有抄经书的项目，跟老婆一起体验了下，原来以为是对着抄，没想到是临摹，不过对于我这种多年不写字的人来说反倒是方便了。&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi04.webp&quot; alt=&quot;我抄的经书&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;我的字太烂了，及时临摹也很丑😄&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi05.webp&quot; alt=&quot;老婆在抄经书&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;一些随拍
+&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi06.webp&quot; alt=&quot;度一切苦厄&quot; &#x2F;&gt;
+&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi08.webp&quot; alt=&quot;小角落&quot; &#x2F;&gt;
+&lt;img src=&quot;https:&#x2F;&#x2F;linq.github.io&#x2F;posts&#x2F;jingshansi&#x2F;jingshansi07.webp&quot; alt=&quot;灯笼&quot; &#x2F;&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="zh">
+        <title>写好日记</title>
+        <published>2024-01-21T00:00:00+00:00</published>
+        <updated>2024-01-21T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://linq.github.io/posts/write-journal/" type="text/html"/>
+        <id>https://linq.github.io/posts/write-journal/</id>
+        
+        <content type="html">&lt;h3 id=&quot;wo-de-ri-ji-zhi-lu&quot;&gt;我的日记之旅&lt;&#x2F;h3&gt;
+&lt;p&gt;去年5月份开始写日记，算起来也半年多了。最开始也没什么章法，简单将内容分为三块：今日的事项，整体的感想和明天的计划等。写了三个月之后，感觉不算太好，然后在小红书上找了一番，看到一个不错的记笔记的方法，就按照推荐的方式把日记划分成5个部分：&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;反思模块，主要记今天有什么做的不好需要改进的&lt;&#x2F;li&gt;
+&lt;li&gt;感触模块，写今日的心情，开心快乐都记下来&lt;&#x2F;li&gt;
+&lt;li&gt;感恩模块，记录三件让自己感恩的事&lt;&#x2F;li&gt;
+&lt;li&gt;成就模块，记录自己有成就感的三件事&lt;&#x2F;li&gt;
+&lt;li&gt;明日计划，提前规划明天要做的事情&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;几个月写下来感觉还不错，也没有以前那种莫名的焦虑感。不过也有一些感觉做的不太满意的，主要是每个模块的内容都不算多，一般就1，2句话，偶尔反思的内容可能会多点。总感觉日记内容是不是应该多点，心里总有个疙瘩吧。&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;ali-abdaalde-ri-ji-fen-xiang&quot;&gt;Ali Abdaal的日记分享&lt;&#x2F;h3&gt;
+&lt;p&gt;这周在B站正好看到Ali Abdaal分享的 &lt;a rel=&quot;noopener&quot; target=&quot;_blank&quot; href=&quot;https:&#x2F;&#x2F;www.bilibili.com&#x2F;video&#x2F;BV1bN4y1v7E3&quot;&gt;改变人生的3种日记写法&lt;&#x2F;a&gt;，感觉跟自己现在的日记方式还挺契合的，而且貌似我的层次还可以提升，所以重点的学习了下。&lt;&#x2F;p&gt;
+&lt;p&gt;按照Ali Abdaal 记日记分为三层&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;第一层，写今天做了什么事&lt;&#x2F;li&gt;
+&lt;li&gt;第二层，写自己的感受&lt;&#x2F;li&gt;
+&lt;li&gt;第三层，写应该做什么&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;p&gt;按照这个层次理论我现在应该是在第二层，我的日记包括了感想和感恩，但是还缺少思考决策。&lt;&#x2F;p&gt;
+&lt;p&gt;我们先来回顾下第二层的日记，核心是要记录下自己的感受，可以是任何痛苦，消极或者抓马的事件。这个可以帮我们理解自己对事情的想法和感受，一旦我们了解了自己的想法感受，就不容易感受压力、忧虑和焦虑。&lt;&#x2F;p&gt;
+&lt;p&gt;里面还提到了“感谢练习”，其实对应就是感恩日记，这个我感觉还是挺有用的。每天写三个感谢的人和事，感觉生活都是美好。我一般会感谢身边的亲人、同事，有时也会感谢外面遇到陌生人，感谢一些举手之劳。这个应该是潜移默化的，慢慢的感觉自己能更好的看待身边的人和事。&lt;&#x2F;p&gt;
+&lt;p&gt;再来看下第三层的日记，我感觉这个应该是反思日记的进阶，更多的是要指导自己，让我们成为更好的自己。里面的关键是，&lt;strong&gt;要写下你应该做什么，你想去往哪个方向，你想做什么决定，以及此时此地应该采取什么行动。&lt;&#x2F;strong&gt;&lt;&#x2F;p&gt;
+&lt;p&gt;这个还是有点难的，Ali Abdaal 提了几种提示方式，包括&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;奥德赛计划&lt;&#x2F;li&gt;
+&lt;li&gt;生命之轮&lt;&#x2F;li&gt;
+&lt;li&gt;十二月庆祝&lt;&#x2F;li&gt;
+&lt;li&gt;恐惧设定练习&lt;&#x2F;li&gt;
+&lt;li&gt;所罗门悖论&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h4 id=&quot;ao-de-sai-ji-hua&quot;&gt;奥德赛计划&lt;&#x2F;h4&gt;
+&lt;ol&gt;
+&lt;li&gt;如果我继续照这条路走下去，5年后我的生活会是什么样子&lt;&#x2F;li&gt;
+&lt;li&gt;如果我走一条完全不同的路，5年后我的生活会是什么样子&lt;&#x2F;li&gt;
+&lt;li&gt;如果我走一条完全不同的路，同时我不用担心钱也不同在乎别人的眼光，5年后我的生活会是什么样子&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h4 id=&quot;sheng-ming-zhi-lun&quot;&gt;生命之轮&lt;&#x2F;h4&gt;
+&lt;p&gt;把你的生活分成8～10个不同的组成部分，你只需要评价你在这些部分里感受的幸福或满意度&lt;&#x2F;p&gt;
+&lt;p&gt;满分十分，包括身体、心理、健康、职业、收入、成长、爱情、家庭、友谊。把握自己生命之轮，思考假如只有三分，不必苛责自己，而是怎么提升至5分？&lt;&#x2F;p&gt;
+&lt;h4 id=&quot;shi-er-yue-qing-zhu-tada&quot;&gt;十二月庆祝🎉&lt;&#x2F;h4&gt;
+&lt;p&gt;从现在起12个月后，在生活的不同方面，我想和朋友一起庆祝什么？&lt;&#x2F;p&gt;
+&lt;p&gt;比如：&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;每周去健身房三次&lt;&#x2F;li&gt;
+&lt;li&gt;庆祝我订婚了&lt;&#x2F;li&gt;
+&lt;li&gt;庆祝我的第一次创业&lt;&#x2F;li&gt;
+&lt;li&gt;庆祝在工作中要求加薪&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;p&gt;通过展望未来，通过问自己这些问题，我们能够更好的知道此时此地要去做哪些行动&lt;&#x2F;p&gt;
+&lt;h4 id=&quot;kong-ju-she-ding-lian-xi&quot;&gt;恐惧设定练习&lt;&#x2F;h4&gt;
+&lt;p&gt;花10分钟问问自己以下问题&lt;&#x2F;p&gt;
+&lt;ol&gt;
+&lt;li&gt;如果我去做我害怕的事情，最糟糕的后果是什么&lt;&#x2F;li&gt;
+&lt;li&gt;我能做些什么来防止那些坏事发生&lt;&#x2F;li&gt;
+&lt;li&gt;如果最坏的情况发生了，我能做什么来修复它&lt;&#x2F;li&gt;
+&lt;li&gt;如果我试过甚至取得了小小成功，那我会得到什么好处&lt;&#x2F;li&gt;
+&lt;li&gt;如果我害怕的事一件不做，半年、一年、三年后，我的生活会怎样&lt;&#x2F;li&gt;
+&lt;&#x2F;ol&gt;
+&lt;h4 id=&quot;luo-men-bei-lun&quot;&gt;罗门悖论&lt;&#x2F;h4&gt;
+&lt;p&gt;和85岁的自己对话，让TA给你提提建议。&lt;&#x2F;p&gt;
+&lt;h3 id=&quot;zhao-yan-dang-xia&quot;&gt;着眼当下&lt;&#x2F;h3&gt;
+&lt;p&gt;我现在也没想好怎么把Ali Abdaal的这套理论跟我的日记方式结合起来，不过也不着急，先有个映像，相信能水到渠成的。&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="zh">
+        <title>成为更好的自己</title>
+        <published>2024-01-13T00:00:00+00:00</published>
+        <updated>2024-01-13T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://linq.github.io/posts/hello-world/" type="text/html"/>
+        <id>https://linq.github.io/posts/hello-world/</id>
+        
+        <content type="html">&lt;p&gt;近期感觉记忆越来越差，很多东西都记不住。&lt;&#x2F;p&gt;
+&lt;p&gt;实践一些办法包括冥想、运动、Anki卡片，每个现在也都在坚持但是感觉效果不太行。之前也看过「费曼学习法」，其中讲到最好的学习记忆方式就是输出，那就通过博客来实践一下吧。&lt;&#x2F;p&gt;
+&lt;p&gt;初步准备每周写一篇博客吧，毕竟平时也没时间写。关于内容主要还是生活记录，也会带一些技术上的思考。对我博客输出的要求是这里的东西都是我自己思考的东西，网上摘的东西就没必要放这里了。&lt;&#x2F;p&gt;
+&lt;p&gt;关于思考这个话题，想来自己也没太多资格说。我是一个很懒的人，生活、社交、思考上都是，一回顾两手空空，脑袋也空空。&lt;&#x2F;p&gt;
+&lt;p&gt;近一年不知道哪根弦被拨动了，开始了跑步，然后开始学习新东西，写日记，而且还都坚持下来了。其实也不能说坚持，就是自然的做到了现在。可能年龄到了吧。&lt;&#x2F;p&gt;
+&lt;p&gt;回到博客，我感觉这个长期写下去也不是太难。希望多记录一些生活的美好，所输出一些自己的思考，以后回顾的时候可以会心一笑。&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+    <entry xml:lang="zh">
+        <title>Personal journal</title>
+        <published>2019-10-05T00:00:00+00:00</published>
+        <updated>2019-10-05T00:00:00+00:00</updated>
+        <author>
+          <name>Unknown</name>
+        </author>
+        <link rel="alternate" href="https://linq.github.io/journal/" type="text/html"/>
+        <id>https://linq.github.io/journal/</id>
+        
+        <content type="html">&lt;h2 id=&quot;2023-06-29-wrench&quot;&gt;2023-06-29 🔧&lt;&#x2F;h2&gt;
+&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean dapibus dignissim nulla et ornare. Vestibulum porta, risus eu ultrices condimentum, quam ante mattis massa, eget laoreet neque nisl ullamcorper nibh.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2023-06-28-blush&quot;&gt;2023-06-28 😊&lt;&#x2F;h2&gt;
+&lt;p&gt;Etiam vulputate nibh in magna feugiat viverra. Donec ultricies sagittis justo vel facilisis. Nulla sollicitudin felis eu tortor consectetur, ac sodales odio faucibus. Vivamus id ultrices orci, ut luctus dolor. Sed sem nibh, semper in posuere eget, dictum eget dui. Praesent nunc dolor, lacinia at tortor eget, sollicitudin sagittis turpis.&lt;&#x2F;p&gt;
+&lt;div class=&quot;textCenter&quot;&gt;
+  &lt;img src=&quot;https:&amp;#x2F;&amp;#x2F;uploads-ssl.webflow.com&amp;#x2F;5ff0b3326e5782a256714165&amp;#x2F;638b6f3a3d8d2e6bad1cb03b_Random22.1.jpg&quot; alt=&quot;xfx6800xt&quot;&gt;
+  
+&lt;&#x2F;div&gt;&lt;h2 id=&quot;2022-11-30-skull&quot;&gt;2022-11-30 💀&lt;&#x2F;h2&gt;
+&lt;p&gt;Pellentesque iaculis diam leo, vel euismod libero finibus sed. Praesent ultrices libero nec lectus posuere euismod. Fusce lobortis elit dui. In non pulvinar ligula. Integer augue mauris, condimentum vitae ante sit amet, consectetur scelerisque lectus. Sed dignissim vitae magna et volutpat. Integer vel risus sagittis&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2022-11-11-neutral-face&quot;&gt;2022-11-11 😐&lt;&#x2F;h2&gt;
+&lt;p&gt;Vivamus molestie, ipsum id ullamcorper facilisis, velit neque elementum metus, quis lacinia ligula felis et metus. Quisque at condimentum tellus, id venenatis turpis. Integer accumsan metus non mauris vulputate pretium.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2022-10-29-popcorn&quot;&gt;2022-10-29 🍿&lt;&#x2F;h2&gt;
+&lt;p&gt;vel mollis varius. Aenean non bibendum dui, eget facilisis turpis. Cras eleifend mi vel leo malesuada, ac vestibulum est condimentum. Aenean accumsan felis elit, sed porttitor nulla volutpat nec. In leo purus, condimentum ut augue sed, imperdiet dapibus sapien. Proin id ullamcorper nisi. &lt;&#x2F;p&gt;
+&lt;h2 id=&quot;2022-10-27-anger&quot;&gt;2022-10-27 💢&lt;&#x2F;h2&gt;
+&lt;p&gt;facilisis sapien, quis faucibus leo urna ut diam. Etiam eu dolor vestibulum, cursus odio at, aliquam nibh. Donec molestie metus non purus facilisis euismod. In interdum luctus libero, in mollis est tincidunt at. Nam congue, nibh nec tempus elementum, nunc sapien placerat felis, id dignissim sapien tellus a libero. Nunc at elementum tortor, eget scelerisque elit. Donec ultricies mi at accumsan semper. Pellentesque vehicula leo sed urna dapibus, quis feugiat arcu auctor. &lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
