@@ -4,6 +4,8 @@ date: 2024-01-13
 taxonomies:
   tags:
     - "想法"
+extra:
+  emoji: 🥣
 ---
 
 近期感觉记忆越来越差，很多东西都记不住。

@@ -40,7 +40,7 @@ anchors = "on"
 
 [extra]
 # Put all your custom variables here
-author = "云归"
+author = "fancylinq"
 display_author = false
 
 favicon = "favicon.ico"
@@ -51,8 +51,9 @@ list_pages = false
 
 header_nav = [
   { url = "/", name_zh = "/首页/" },
-  { url = "/book", name_zh = "/图书/" },
-  { url = "/blog", name_zh = "/博客/" }
+  { url = "/archive", name_zh = "/归档/" },
+  { url = "/tags/", name_zh = "/标签/" },
+  { url = "/book", name_zh = "/图书/" }
 ]
 
 stylesheets = [
